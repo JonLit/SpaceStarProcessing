@@ -1,5 +1,6 @@
 import com.dhchoi.CountdownTimer;
 import com.dhchoi.CountdownTimerService;
+import controlP5.*;
 
 int zeit;
 int punkte;
@@ -21,10 +22,15 @@ CountdownTimer timer1 = CountdownTimerService.getNewCountdownTimer(this).configu
 CountdownTimer kryptonitAnimationTimer1 = CountdownTimerService.getNewCountdownTimer(this).configure(10, 250);
 
 boolean[] keysPressed = new boolean[65536];
+ControlP5 cp5;
 
 Star[] stars;
 Kryptonit[] kryptonit;
 Raumschiff raumschiff;
+
+Player[] players;
+
+String textValue = "";
 
 void settings()
 {
@@ -44,6 +50,23 @@ void setup() {
 	for (int i = 0; i < schwierigkeit; i++) {
 		stars = (Star[]) append(stars, new Star(int(random(50, width-150)), int(random(50, height-100)), int(random(5, 15))));
 	}
+
+	players = new Player[0];
+
+	cp5 = new ControlP5(this);
+
+	cp5.addTextfield("Name")
+		.setPosition(width/2-100, height/3*2-20)
+		.setSize(200, 40)
+		.setFont(gameOverFontSmall)
+		.setFocus(false)
+		.setColor(color(255))
+		.setAutoClear(false)
+		.setText("Name")
+		.setLabel("")
+		.hide()
+		.lock()
+		;
 }
 
 void draw() {
@@ -57,9 +80,11 @@ void draw() {
 			text("Punkte:\t" + punkte, width-100 , 100);
 			text("Leben:\t" + leben, width-100, 150);
 			text("Highscore:\t" + highscore, width-100, 200);
-			text(kryptonitAnimationTimer1.getTimeLeftUntilFinish(), width-100, 250);
-			text("schwierigkeit:\t" + schwierigkeit, width-100, 300);
+			text("schwierigkeit:\t" + schwierigkeit, width-100, 250);
 			try {
+				for (int i = 0; i < players.length; i++) {
+					text(players[i].getName() + "   " + players[i].getScore(), width-100, 300+15*i);
+				}
 				for (int i = 0; i < stars.length; i++) {
 					stars[i].zeichnen();
 				}
@@ -88,6 +113,8 @@ void draw() {
 				textFont(gameOverFontSmall, 16);
 				textSize(16);
 				text("Press ENTER to resume", width/2, height/2+30);
+				cp5.get(Textfield.class, "Name").unlock();
+				cp5.get(Textfield.class, "Name").show();
 				pop();
 			}
 			else if (paused) {
@@ -196,11 +223,18 @@ void draw() {
 
 void keyPressed() {
 	if (gameOver && key == ENTER) {
+		players = (Player[]) append(players, new Player(cp5.get(Textfield.class, "Name").getText(), punkte));
+		cp5.get(Textfield.class, "Name").lock();
+		cp5.get(Textfield.class, "Name").hide();
+
 		schwierigkeit = 20;
 		paused = true;
 		gameOver = false;
 		leben = 5;
 		punkte = 0;
+		timer1.reset(CountdownTimer.StopBehavior.STOP_IMMEDIATELY);
+		timer1.start();
+		zeit = 0;
 		stars = null;
 		stars = new Star[0];
 		for (int i = 0; i < schwierigkeit; i++) {
